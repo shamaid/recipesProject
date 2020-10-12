@@ -1,0 +1,889 @@
+openapi: 3.0.0
+info:
+  title: Recpies Website
+  description: This is a initial API Created by D0r0n & O$c@r
+  version: 1.0.1
+servers:
+- url: https://virtserver.swaggerhub.com/shamaid/API/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://virtserver.swaggerhub.com/Oscareps/Recpies/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: auth
+  description: All authoentication related routes
+- name: user
+  description: All user's personal app info
+- name: recipes
+  description: All recipes genral info
+paths:
+  /Login:
+    post:
+      tags:
+      - auth
+      description: A JSON object containing username and password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+        required: true
+      responses:
+        "200":
+          description: |
+            User authenitcated successfully. The session ID is returned in a cookie name 'session'. You need to include this cookie in subsequent requests
+          headers:
+            Set-Cookie:
+              style: simple
+              explode: false
+              schema:
+                $ref: '#/components/schemas/Set-Cookie'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: login succeeded
+                  success: true
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Username or Password incorrect
+  /Register:
+    post:
+      tags:
+      - auth
+      summary: Create a new user
+      description: Create and add new user to the DB
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        "201":
+          description: Sign in success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: user created
+                  success: true
+        "409":
+          description: illegal parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Username taken
+                  success: false
+  /user/Logout:
+    get:
+      tags:
+      - user
+      summary: Log out
+      description: Log out the current using user
+      operationId: logOut
+      responses:
+        "200":
+          description: |
+            User rest authenitcated successfully. The session cookie is deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: logout succeeded
+      security:
+      - cookieAuth: []
+  /user/recipeInfo/{ids}:
+    get:
+      tags:
+      - user
+      description: Get the user's app info on reciepes by their ids
+      parameters:
+      - name: ids
+        in: path
+        description: Recipes ids array, in oredr to return users info
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: array
+          items:
+            type: integer
+      responses:
+        "200":
+          description: Info about users and each recipe
+          content:
+            application/json:
+              schema:
+                type: array
+                example:
+                  "60":
+                    watched: true
+                    saved: false
+                items:
+                  type: object
+                  additionalProperties:
+                    required:
+                    - saved
+                    - watched
+                    type: object
+                    properties:
+                      watched:
+                        type: boolean
+                      saved:
+                        type: boolean
+                  description: User's info on recipes, Returns dictionary of ids as
+                    key, and info as values
+        "404":
+          description: No found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No found
+      security:
+      - cookieAuth: []
+  /user/viewRecipe/{recipeid}:
+    get:
+      tags:
+      - user
+      summary: Liking a recipe by user
+      description: Add like to a
+      operationId: viewRecipe
+      parameters:
+      - name: recipeid
+        in: path
+        description: recipe's id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/likeRecipe/{recipeid}:
+    put:
+      tags:
+      - user
+      summary: Liking a recipe by user
+      description: Add like to a
+      operationId: likeRecipe
+      parameters:
+      - name: recipeid
+        in: path
+        description: recipe's id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/lastviewed:
+    get:
+      tags:
+      - user
+      summary: Get last 3 recpies viewed by user.
+      description: Get last 3 recpies viewed by the user. Returns an array size 3
+        of recpies.
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeId'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: No recipes were watched
+                  success: true
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/getUserRecipe/{recipeid}:
+    get:
+      tags:
+      - user
+      summary: Get user recpies
+      description: Get recpies created by this user
+      operationId: getUserRecipes
+      parameters:
+      - name: recipeid
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewRecipe'
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/getUserAllRecipes:
+    get:
+      tags:
+      - user
+      summary: Get user recpies
+      description: Get recpies created by this user
+      operationId: getUserAllRecipes
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreviewRecipe'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: No personal recipes
+                  success: true
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /getUserFamilyRecipe/{recipeid}:
+    get:
+      tags:
+      - user
+      summary: Get user family recpies
+      operationId: getUserFamilyRecipe
+      parameters:
+      - name: recipeid
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FamilyRecipe'
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/getAllUserFamilyRecipes:
+    get:
+      tags:
+      - user
+      summary: Get user's family recpies
+      description: Get user's family recpies
+      operationId: getAllUserFamilyRecipes
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FamilyRecipe'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: No family recipes
+                  success: true
+        "404":
+          description: No found
+      security:
+      - cookieAuth: []
+  /user/getAllSaved:
+    get:
+      tags:
+      - user
+      summary: Get user favorites
+      description: Get all the favorits recipes , can be used by loged user.
+      operationId: getUserFavorite
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeId'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: No favorite recipes found
+                  success: true
+        "404":
+          description: No found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No found
+      security:
+      - cookieAuth: []
+  /user/getUserPorfilePicture:
+    get:
+      tags:
+      - user
+      summary: Get user Porfile Picture
+      description: Get user Porfile Picture
+      operationId: getPorfilePicture
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                example: image:https://res.cloudinary.com/dvwtxituk/image/upload/v1594999752/profile_vpibiw.png
+        "404":
+          description: No found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No found
+      security:
+      - cookieAuth: []
+  /recipes/search/query/{searchQuery}/amount/{num}:
+    get:
+      tags:
+      - recipes
+      summary: Search Recipe
+      description: |
+        Search for a recipee in spoonacular API, using search query. Will return results acroding number param. Filter by Cusine, Diet , Intolorence
+      operationId: search
+      parameters:
+      - name: searchQuery
+        in: path
+        description: The search query for searching a query in the API
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: num
+        in: path
+        description: Number of returned recipes
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          default: 5
+          enum:
+          - 5
+          - 10
+          - 15
+      - name: Inoleracnes
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/Inoleracnes'
+      - name: Diet
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/Diet'
+      - name: Cusine
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/Cuisine'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreviewRecipe'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: No recipes found
+                  success: true
+        "404":
+          description: No found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No found
+  /recipes/random:
+    get:
+      tags:
+      - recipes
+      summary: Get 3 recepies
+      description: Returns 3 random recipes
+      operationId: getRandomRecipes
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreviewRecipe'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: recipe not found
+                  success: true
+        "404":
+          description: No found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No found
+  /recipes/previewRecipe/{recipeid}:
+    get:
+      tags:
+      - recipes
+      summary: Present preview and info about recipe
+      description: Display infomation about the recipe. Presents its photo,name,preperation
+        time,poplarity,if vegan,if has gluten, Give the user name if exist indication
+        if he viewed it before and if he liked it.
+      operationId: previewRecipe
+      parameters:
+      - name: recipeid
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          example: "2"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewRecipe'
+        "205":
+          description: No recipes were watched
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: recipe not found
+                  success: true
+        "404":
+          description: Not Found
+  /recipes/showRecipe/{recipeid}:
+    get:
+      tags:
+      - recipes
+      summary: Present full recipe
+      description: Display all infomation about the recipe.
+      operationId: showRecipeById
+      parameters:
+      - name: recipeid
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        "404":
+          description: Not Found
+  /recipes/recipeInfo/{ids}:
+    get:
+      tags:
+      - recipes
+      summary: Present full recipes
+      description: Display all infomation about the recipes.
+      operationId: recipeInfo
+      parameters:
+      - name: ids
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        "404":
+          description: Not Found
+components:
+  schemas:
+    UserLogin:
+      type: object
+      properties:
+        username:
+          maxLength: 8
+          minLength: 3
+          type: string
+          description: Contain only letters
+        password:
+          maxLength: 10
+          minLength: 5
+          type: string
+          description: Conatins leters with at least 1 numerical charcter and 1 special
+            charcter
+          format: password
+      example:
+        username: Oscar
+        password: 123!@#
+    Set-Cookie:
+      type: string
+      example: session=blads89sha9sadda
+    User:
+      type: object
+      properties:
+        username:
+          maxLength: 8
+          minLength: 3
+          pattern: ^[a-zA-Z]+$
+          type: string
+          example: OsEp
+        firstName:
+          type: string
+          example: Michael
+        lastName:
+          type: string
+          example: Jordan
+        country:
+          type: string
+          description: values from here 'https://restcountries.eu/rest/v2/all'
+          example: Israel
+        password:
+          maxLength: 10
+          minLength: 5
+          type: string
+          format: password
+          example: qwer1234c
+        email:
+          pattern: email
+          type: string
+          example: gmail@post.bgu.ac.il
+        image:
+          pattern: URL
+          type: string
+          description: from here 'https://cloudinary.com/'
+          example: https://images.app.goo.gl/c8UWFG9iMyLGokvY8
+    PreviewReceipeInside:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123"
+        title:
+          type: string
+          example: Omelette
+        duration:
+          type: integer
+          example: 45
+        likes:
+          type: integer
+          example: 70
+        vegetrian:
+          type: boolean
+          example: true
+        vegan:
+          type: boolean
+          example: true
+        glutenFree:
+          type: boolean
+          example: true
+        image:
+          type: string
+          example: Omelette
+    PreviewRecipe:
+      type: object
+      properties:
+        recipeID:
+          $ref: '#/components/schemas/PreviewReceipeInside'
+    RecipeId:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+          example: "123"
+    Recipe:
+      type: object
+      properties:
+        recipeID:
+          $ref: '#/components/schemas/PreviewReceipeInside'
+        servings:
+          type: integer
+        ingridents:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngridentsAndAmount'
+        instructions:
+          type: array
+          items:
+            type: string
+    IngridentsAndAmount:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Rice
+        quantity:
+          type: string
+          example: One cup
+    FamilyRecipe:
+      type: object
+      properties:
+        recipeOwner:
+          type: string
+          example: grandmother Beyonce
+        recipePeriod:
+          type: string
+          example: During Passover Holiday
+        title:
+          type: string
+          example: Omelette
+        duration:
+          type: integer
+          example: 45
+        photos:
+          type: array
+          example:
+          - https://res.cloudinary.com/dvp56osd6/image/upload/v1589468715/family-cooking-together-kitchen-happy-three-generation-vegetable-salad-127659271_jdwrny.jpg
+          - https://res.cloudinary.com/dvp56osd6/image/upload/v1589468715/bfedf743b527d9ef25e013eaf91ce6f8bc06ba9e_jrmoxs.jpg
+          items:
+            pattern: URL
+            type: string
+            description: from here 'https://cloudinary.com/'
+        ingridents:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngridentsAndAmount'
+        instructions:
+          type: array
+          items:
+            type: string
+    Equipment:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Oven
+        image:
+          pattern: URL
+          type: string
+          description: from here 'https://cloudinary.com/'
+          example: https://images.app.goo.gl/z5CuC1s9bygGwARX7
+        temp:
+          $ref: '#/components/schemas/Equipment_temp'
+    Step:
+      type: object
+      properties:
+        tools:
+          type: array
+          example:
+          - name: Oven
+            image: https://res.cloudinary.com/dvp56osd6/image/upload/v1589471135/4aad991e91ee1ecc0ef204be5ef8c374_dqutsp.jpg
+            temp:
+              num: 90
+              unit: degrees Celsius
+          items:
+            $ref: '#/components/schemas/Equipment'
+        ingrediants:
+          type: array
+          example:
+          - name: eggs
+            quantity: 2
+          - name: cups of milk
+            quantity: 1
+          items:
+            $ref: '#/components/schemas/IngridentsAndAmount'
+        description:
+          type: string
+          example: Add the oil spoon to the pan and heat to 90 degrees , And mix the
+            eggs in a bowl with the fork.
+    RecipeInstuctions:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Omelette
+        steps:
+          type: array
+          example:
+          - tools:
+            - name: oven
+              image: https://res.cloudinary.com/dvp56osd6/image/upload/v1589471135/4aad991e91ee1ecc0ef204be5ef8c374_dqutsp.jpg
+              temp:
+                num: 90
+                unit: degrees Celsius
+            - name: fork
+              image: https://images.app.goo.gl/qwXPmMcbw3jRAvfZ7
+            - name: bowl
+              image: https://images.app.goo.gl/wsHLyskBjXzkekvU8
+            ingrediants:
+            - name: egg
+              queanty: 2
+            - name: spoon of oil
+              quanty: 1
+            description: Add the oil spoon to the pan and heat to 90 degrees , And
+              mix the eggs in a bowl with the fork.
+          - tools: []
+            ingrediants: []
+            description: Wait until the pan will be in 90 degrees.
+          - tools: []
+            ingrediants: []
+            description: Add the mixed egg to the pan.
+          - tools: []
+            ingrediants: []
+            description: Wait 2 minutes.
+          items:
+            $ref: '#/components/schemas/Step'
+    Equipment_temp:
+      type: object
+      properties:
+        num:
+          type: integer
+          example: 180
+        unit:
+          type: string
+          example: degrees Celsius
+    Inoleracnes:
+      type: string
+      enum:
+      - Dairy
+      - Egg
+      - Gluten
+      - Grain
+      - Peanut
+      - Seafood
+      - Sesame
+      - Shellfish
+      - Soy
+      - Sulfite
+      - Tree Nut
+      - Wheat
+    Diet:
+      type: string
+      enum:
+      - African
+      - American
+      - British
+      - Cajun
+      - Caribbean
+      - Chinese
+      - Eastern European
+      - European
+      - French
+      - German
+      - Greek
+      - Indian
+      - Irish
+      - Italian
+      - Japanese
+      - Jewish
+      - Korean
+      - Latin American
+      - Mediterranean
+      - Mexican
+      - Middle Eastern
+      - Nordic
+      - Southern
+      - Spanish
+      - Thai
+      - Vietnamese
+    Cuisine:
+      type: string
+      enum:
+      - Gluten Free
+      - Ketogenic
+      - Vegetarian
+      - Lacto-Vegetarian
+      - Ovo-Vegetarian
+      - Vegan
+      - Pescetarian
+      - Paleo
+      - Primal
+      - Whole30
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: session
+      in: cookie

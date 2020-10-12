@@ -1,0 +1,1 @@
+https://app.swaggerhub.com/apis-docs/shamaid/API/1.0.1
